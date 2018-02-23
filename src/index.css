@@ -1,0 +1,72 @@
+body {
+  margin: 0;
+  padding: 20px 30px;
+  font-family: "Trebuchet MS", Helvetica, sans-serif;
+}
+
+.search {
+  padding: 15px 0;
+}
+
+.search-form label {
+  padding-right: 10px;
+}
+
+.search-form input {
+  margin-right: 30px;
+}
+
+.search-results {
+  margin-top: 30px;
+}
+
+.search-results .flight {
+  padding-bottom: 30px;
+  clear: both;
+}
+
+.search-results .flight-info {
+  /* width: 700px; */
+}
+
+.search-results .flight-info .col {
+  padding-right: 20px;
+}
+
+.search-results .flight-info .col-date {
+  width: 100px;
+}
+
+.search-results .flight-info .col-airports {
+  width: 250px;
+}
+
+.search-results .flight-info .col-airlines {
+  width: 150px;
+}
+
+.search-results .flight-info .col-price {
+  width: 100px;
+  font-weight: bold;
+}
+
+.l {
+  float: left;
+}
+
+.r {
+  float: right;
+}
+
+.search-results .logo {
+  height: 40px;
+}
+
+.cb {
+  clear: both;
+}
+
+.message-error {
+  color: #ff0000;
+  padding: 20px 0;
+}
