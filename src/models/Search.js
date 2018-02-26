@@ -1,14 +1,21 @@
 const API_URL = 'https://graphql.kiwi.com/';
 
 export default class SearchModel {
-	searchFlights(params, page, perPage) {
+	searchFlights(params, first, after, last, before) {
 		const query = `
-			query searchFlights($locationFrom: String, $locationTo: String, $date: Date, $perPage: Int) {
+			query searchFlights($locationFrom: String, $locationTo: String, $date: Date,
+				$first: Int, $after: String, $last: Int, $before: String) {
 				allFlights(search: {
 					from: {location: $locationFrom},
 					to: {location: $locationTo},
 					date: {exact: $date}
-				}, first: $perPage) {
+				}, first: $first, after: $after, last: $last, before: $before) {
+				pageInfo {
+					hasNextPage,
+					hasPreviousPage,
+					startCursor,
+					endCursor
+				}
 				edges {
 					node {
 						id,
@@ -41,19 +48,19 @@ export default class SearchModel {
 							name
 						},
 						bookingUrl
-					},
-					cursor
+					}
 				}
 			}
 		}`;
 
-		//const [year, month, day] = params.date.split('-');
-
 		let flightData = this.fetchData(query, {
 			locationFrom: params.locationFrom,
 			locationTo: params.locationTo,
-			date: params.date,
-			perPage: perPage
+			date: params.date.format("YYYY-MM-DD"),
+			first: first,
+			after: after,
+			last: last,
+			before: before
 		});
 
 		//flightData.then(response => console.log(response));
