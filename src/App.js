@@ -1,12 +1,14 @@
 import React from 'react';
 import SearchModel from './models/Search';
 import KiwiLogo from './img/kiwi-logo.svg';
-
+import Autosuggest from 'react-autosuggest';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import 'react-datepicker/dist/react-datepicker.css';
+import './css/autosuggest.css';
 
 const RESULTS_PER_PAGE = 5;
+const AUTOCOMPLETE_SUGGESTIONS_LIMIT = 10;
 
 const PaginationDir = {
 	PREV: -1,
@@ -31,8 +33,8 @@ class Search extends React.Component {
 		super(props);
 		this.state = {
 			searchParams: {
-				locationFrom: 'Brno',
-				locationTo: 'London',
+				locationFrom: '',
+				locationTo: '',
 				date: moment()
 			},
 			isSearched: false,
@@ -71,10 +73,9 @@ class Search extends React.Component {
 		);
 	}
 
-	handleInputChange(event) {
-		const target = event.target;
+	handleInputChange = (inputName, event, { newValue }) => {
 		const state = {
-			searchParams: Object.assign({}, this.state.searchParams, {[target.name]: target.value})
+			searchParams: Object.assign({}, this.state.searchParams, {[inputName]: newValue})
 		}
 
 		this.setState(state);
@@ -180,14 +181,20 @@ class SearchForm extends React.Component {
 		return (
 			<div>
 				<form onSubmit={this.props.onSubmit} className="search-form">
-					<label htmlFor="locationFrom">From:</label>
-					<input type="text" name="locationFrom" value={this.props.values.locationFrom} id="locationFrom" onChange={this.props.onInputChange} />
+					<div className="form-elem">
+						<label htmlFor="locationFrom">From:</label>
+						<Autocomplete name="locationFrom" value={this.props.values.locationFrom} id="locationFrom"
+							onChange={(event, { newValue, method }) => this.props.onInputChange("locationFrom", event, { newValue, method })} />
+					</div>
 
-					<label htmlFor="locationTo">To:</label>
-					<input type="text" name="locationTo" value={this.props.values.locationTo} id="locationTo" onChange={this.props.onInputChange} />
+					<div className="form-elem">
+						<label htmlFor="locationTo">To:</label>
+						<Autocomplete name="locationTo" value={this.props.values.locationTo} id="locationTo"
+							onChange={(event, { newValue, method }) => this.props.onInputChange("locationTo", event, { newValue, method })} />
+					</div>
 
-					<label htmlFor="date">Date:</label>
-					<div class="datepicker">
+					<div className="form-elem">
+						<label htmlFor="date">Date:</label>
 						<DatePicker minDate={moment()} dateFormat="ddd DD MMM" selected={this.props.values.date} onChange={this.props.onDateChange}
 							name="date" id="date" readOnly={true} />
 					</div>
@@ -267,7 +274,7 @@ class FlightConnection extends React.Component {
 					</a>
 				</div>
 
-				<div class="cb"></div>
+				<div className="cb"></div>
 			</div>
 		);
 	}
@@ -302,4 +309,88 @@ function ErrorMessage(props) {
 	return (
 		<div className="message message-error">{props.message}</div>
 	);
+}
+
+class Autocomplete extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			suggestions: []
+		};
+
+		this.onSuggestionsFetchRequested = this.onSuggestionsFetchRequested.bind(this);
+		this.onSuggestionsClearRequested = this.onSuggestionsClearRequested.bind(this);
+	}
+
+	getSuggestions(value) {
+		const inputValue = value.trim();
+		const inputLength = inputValue.length;
+	  
+		const searchModel = new SearchModel();  // TODO: move away
+
+		if (inputLength === 0) {
+			return [];
+		}
+
+		return searchModel.searchLocations(inputValue, AUTOCOMPLETE_SUGGESTIONS_LIMIT)
+			.then(response => {
+				// TODO: handle errors
+				const edges = response.data.allLocations.edges;
+				return edges.map(loc => loc.node);
+			});
+	};
+
+	renderSuggestion(suggestion) {
+		let extras = null;
+		if (suggestion.type === 'airport') {
+			extras = ' (' + suggestion.locationId + ')';
+		} else if (suggestion.type === 'city' && suggestion.country != null) {
+			extras = ' (' + suggestion.country.name + ')';
+		}
+
+		return (
+			<span>
+				{suggestion.name}
+				{extras && <span className="extras">{extras}</span>}
+			</span>
+		);
+	}
+
+	onSuggestionsFetchRequested = ({ value }) => {
+		this.getSuggestions(value).then(suggestions => {
+			this.setState({
+				suggestions: suggestions
+			});
+		});
+	};
+
+	onSuggestionsClearRequested() {
+		this.setState({
+			suggestions: []
+		});
+	};
+
+	onSuggestionSelected = (event, { method }) => {
+		if (method === 'enter') {
+			event.preventDefault();  // preventing form submit
+		}
+	};
+
+	getSuggestionValue = suggestion => suggestion.name;
+
+	render() {
+		const { suggestions } = this.state;
+
+		return (
+			<Autosuggest
+				suggestions={suggestions}
+				onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+				onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+				onSuggestionSelected={this.onSuggestionSelected}
+				getSuggestionValue={this.getSuggestionValue}
+				renderSuggestion={this.renderSuggestion}
+				inputProps={this.props}
+		  	/>
+		);
+	}
 }

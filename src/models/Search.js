@@ -80,4 +80,30 @@ export default class SearchModel {
 		})
 		.then(response => response.json());
 	}
+
+	searchLocations(term, limit) {
+		const query = `
+			query searchLocations($search: String, $first: Int) {
+				allLocations(search: $search, first: $first) {
+					edges {
+						node {
+							locationId
+							name
+							type
+							country {
+								name
+							}
+						}
+					}
+				}
+			}`;
+
+		let locationsData = this.fetchData(query, {
+			search: term,
+			first: limit
+		});
+
+		//locationsData.then(response => console.log(response));
+		return locationsData;
+	}
 }

@@ -5,10 +5,7 @@ organized by [Kiwi.com](https://www.kiwi.com/). It's used for searching flight c
 
 ## TODO:
 
-- date format
-- locations autocomplete https://www.npmjs.com/package/react-autosuggest
 - form validation 
-- pagination
 - BEM
 - GitHub
 - index.html template - meta tags, favicon etc.
@@ -16,5 +13,5 @@ organized by [Kiwi.com](https://www.kiwi.com/). It's used for searching flight c
 - methods documentation
 - run app publicly
 - write proper description in README.md
-- show loader while fetching results
+
 - Moment: https://momentjs.com/docs/#/parsing/string-format/

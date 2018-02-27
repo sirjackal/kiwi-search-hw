@@ -39,11 +39,11 @@ body {
 }
 
 .search-results .col-airports {
-  width: 204px;
+  width: 224px;
 }
 
 .search-results .col-airlines {
-  width: 170px;
+  width: 150px;
 }
 
 .search-results .col-price {
@@ -122,10 +122,6 @@ body {
   }
 }
 
-.react-datepicker-wrapper {
-  display: inline-block;
-}
-
-.datepicker {
+.form-elem {
   display: inline-block;
 }
