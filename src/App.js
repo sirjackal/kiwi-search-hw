@@ -1,5 +1,5 @@
 import React from 'react';
-import SearchModel from './models/Search';
+import * as SearchModel from './models/Search';
 import KiwiLogo from './img/kiwi-logo.svg';
 import Autosuggest from 'react-autosuggest';
 import DatePicker from 'react-datepicker';
@@ -15,20 +15,7 @@ const PaginationDir = {
 	NEXT: 1
 };
 
-export default class App extends React.Component {
-	constructor(props) {
-		super(props);
-		this.searchModel = new SearchModel();
-	}
-
-	render() {
-		return (
-			<Search searchModel={this.searchModel} />
-		);
-	}
-}
-
-class Search extends React.Component {
+export default class Search extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -46,7 +33,8 @@ class Search extends React.Component {
 				startCursor: null,
 				endCursor: null
 			},
-			errors: []
+			errors: [],
+			validationMessages: {}
 		};
 
 		this.handleInputChange = this.handleInputChange.bind(this);
@@ -60,7 +48,7 @@ class Search extends React.Component {
 		return (
 			<div className="search">
 				<SearchForm onSubmit={this.handleFormSubmit} onInputChange={this.handleInputChange}
-					onDateChange={this.handleDateChange} values={this.state.searchParams} />
+					onDateChange={this.handleDateChange} values={this.state.searchParams} validationMessages={this.state.validationMessages} />
 
 				{this.state.errors.map((message, i) => <ErrorMessage message={message} key={i} />)}
 
@@ -89,15 +77,50 @@ class Search extends React.Component {
 		this.setState(state);
 	}
 
+	/** 
+	 * As simple form validation as possible.
+	 * Maybe it would be better to have this func inside SearchForm component, but we are
+	 * handling form submit event here.
+	 * 
+	 * @returns {boolean}
+	 */
+	validateForm() {
+		let validationMessages = {};
+
+		const requiredFields = [
+			'locationFrom',
+			'locationTo'
+		];
+
+		let isValid = true;
+
+		for (let fld of requiredFields) {
+			const value = this.state.searchParams[fld];
+
+			if (value === null || value.trim() === '') {
+				validationMessages[fld] = ['Please fill in this field first.'];
+				isValid = false;
+			}
+		}
+
+		this.setState({validationMessages: validationMessages});
+		return isValid;
+	}
+
 	handleFormSubmit(event) {
 		event.preventDefault();
+
+		if (!this.validateForm()) {
+			return;
+		}
+
 		this.setState({
 			isLoading: true,
 			isSearched: true
 		});
 
 		try {
-			let flights = this.props.searchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE);
+			let flights = SearchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE);
 			this.showResults(flights);
 		} catch (err) {
 			this.handleError(err);
@@ -109,7 +132,7 @@ class Search extends React.Component {
 		this.setState({isLoading: true});
 
 		try {
-			let flights = this.props.searchModel.searchFlights(this.state.searchParams, null, null,
+			let flights = SearchModel.searchFlights(this.state.searchParams, null, null,
 				RESULTS_PER_PAGE, this.state.pagination.startCursor);
 
 			this.showResults(flights, PaginationDir.PREV);
@@ -123,7 +146,7 @@ class Search extends React.Component {
 		this.setState({isLoading: true});
 
 		try {
-			let flights = this.props.searchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE,
+			let flights = SearchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE,
 				this.state.pagination.endCursor, null, null);
 
 			this.showResults(flights, PaginationDir.NEXT);
@@ -136,15 +159,15 @@ class Search extends React.Component {
 		flights.then(response => {
 			let results = [], errors = [], pagination = {};
 
-			if (response.data.allFlights != null) {
+			if (response.data instanceof Object && response.data.allFlights instanceof Object) {
 				if (Array.isArray(response.data.allFlights.edges)) {
 					results = response.data.allFlights.edges;
 				}
 
 				const pageInfo = response.data.allFlights.pageInfo;
 
-				// pageInfo.hasNextPage is always false when paginating backwards
-				// pageInfo.hasPreviousPage is always false when pagination forwards
+				// pageInfo.hasNextPage is always false when paginating backwards,
+				// pageInfo.hasPreviousPage is always false when paginating forwards
 				pagination = {
 					hasNextPage: lastPaginationDir && lastPaginationDir === PaginationDir.PREV ? true : pageInfo.hasNextPage,
 					hasPreviousPage: lastPaginationDir && lastPaginationDir === PaginationDir.NEXT ? true : pageInfo.hasPreviousPage,
@@ -153,8 +176,10 @@ class Search extends React.Component {
 				};
 			}
 			
+			// TODO: distinguish input errors (Location has not been found) vs. backend error
+			// (syntax error in query)
 			if (Array.isArray(response.errors)) {
-				errors = response.errors.map(error => error.message);
+				 errors = response.errors.map(error => error.message);
 			}
 
 			this.setState({
@@ -171,26 +196,46 @@ class Search extends React.Component {
 	handleError(err) {
 		this.setState({
 			results: [],
-			errors: [err instanceof Error ? err.message : err]
+			errors: [err instanceof Error ? err.message : err],
+			isLoading: false
 		});
 	}
 }
 
 class SearchForm extends React.Component {
+	renderValidationMessages(inputName) {
+		const messages = Array.isArray(this.props.validationMessages[inputName]) ? this.props.validationMessages[inputName] : [];
+
+		if (messages.length === 0) {
+			return '';
+		}
+			
+		return (
+			<ul className="form-errors">
+				{messages.map((msg, i) => <li key={i}>{msg}</li>)}
+			</ul>
+		);
+	}
+
 	render() {
 		return (
 			<div>
 				<form onSubmit={this.props.onSubmit} className="search-form">
+					{/* In the autocomplete onChange method I cannot tell the input name from event.target if the event
+						comes from the suggestion mouse click, so I have to forward input's name as parameter as well. */}
+
 					<div className="form-elem">
 						<label htmlFor="locationFrom">From:</label>
 						<Autocomplete name="locationFrom" value={this.props.values.locationFrom} id="locationFrom"
 							onChange={(event, { newValue, method }) => this.props.onInputChange("locationFrom", event, { newValue, method })} />
+						{this.renderValidationMessages("locationFrom")}
 					</div>
 
 					<div className="form-elem">
 						<label htmlFor="locationTo">To:</label>
 						<Autocomplete name="locationTo" value={this.props.values.locationTo} id="locationTo"
 							onChange={(event, { newValue, method }) => this.props.onInputChange("locationTo", event, { newValue, method })} />
+						{this.renderValidationMessages("locationTo")}
 					</div>
 
 					<div className="form-elem">
@@ -199,8 +244,11 @@ class SearchForm extends React.Component {
 							name="date" id="date" readOnly={true} />
 					</div>
 
-					<input type="submit" value="Search" />
+					<div className="form-elem">
+						<input type="submit" value="Search" />
+					</div>
 				</form>
+				<div className="cb"></div>
 			</div>
 		);
 	}
@@ -325,18 +373,20 @@ class Autocomplete extends React.Component {
 	getSuggestions(value) {
 		const inputValue = value.trim();
 		const inputLength = inputValue.length;
-	  
-		const searchModel = new SearchModel();  // TODO: move away
 
 		if (inputLength === 0) {
 			return [];
 		}
 
-		return searchModel.searchLocations(inputValue, AUTOCOMPLETE_SUGGESTIONS_LIMIT)
+		return SearchModel.searchLocations(inputValue, AUTOCOMPLETE_SUGGESTIONS_LIMIT)
 			.then(response => {
-				// TODO: handle errors
-				const edges = response.data.allLocations.edges;
-				return edges.map(loc => loc.node);
+				let nodes = [];
+
+				if (response.data instanceof Object) {
+					nodes = response.data.allLocations.edges.map(loc => loc.node);
+				}
+
+				return nodes;
 			});
 	};
 
@@ -357,18 +407,23 @@ class Autocomplete extends React.Component {
 	}
 
 	onSuggestionsFetchRequested = ({ value }) => {
-		this.getSuggestions(value).then(suggestions => {
-			this.setState({
-				suggestions: suggestions
-			});
-		});
+		try {
+			this.getSuggestions(value).then(suggestions => {
+				this.setState({suggestions: suggestions});
+			})
+			.catch(err => this.clearSuggestions());
+		} catch (err) {
+			this.clearSuggestions();
+		}
 	};
 
-	onSuggestionsClearRequested() {
+	clearSuggestions() {
 		this.setState({
 			suggestions: []
 		});
-	};
+	}
+
+	onSuggestionsClearRequested = () => this.clearSuggestions();
 
 	onSuggestionSelected = (event, { method }) => {
 		if (method === 'enter') {

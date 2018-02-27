@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import Search from './App';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(<Search />, document.getElementById('root'));
