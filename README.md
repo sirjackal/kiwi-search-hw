@@ -23,20 +23,20 @@ Check out the [demo page](https://kiwi.krepa.cz/).
 
 You'll need to have [Node.js](https://nodejs.org) installed on your local development machine.
 
-Then you can install dependent packages via NPM:
+Then you can install dependent packages via [NPM](https://www.npmjs.com/):
 ```
 npm install
 ```
 
 ## Deployment
 
-To run the app in development mode:
+To run the app in *development* mode:
 ```
 npm start
 ```
 Open http://localhost:3000 to view it in the browser.
 
-To build the app for production to the `build` folder:
+To build the app for *production* to the `build` folder:
 ```
 npm run build
 ```
