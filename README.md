@@ -11,7 +11,7 @@ Check out the [demo page](https://kiwi.krepa.cz/).
 
 ## Features
 
-- one way flight connections search (by parameters from, to, date) 
+- one way flight connections search (by parameters *from*, *to*, *date*) 
 - destinations suggestions while typing (autocomplete)
 - search results pagination
 - using [GraphQL API](https://kiwi-graphiql.now.sh/) to fetch data
