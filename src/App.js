@@ -5,7 +5,8 @@ import Autosuggest from 'react-autosuggest';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import 'react-datepicker/dist/react-datepicker.css';
-import './css/autosuggest.css';
+import { Form, FormGroup, Label, Input, Button, FormFeedback, Row, Col, Pagination, PaginationItem,
+	PaginationLink, Alert } from 'reactstrap';
 
 const RESULTS_PER_PAGE = 5;
 const AUTOCOMPLETE_SUGGESTIONS_LIMIT = 10;
@@ -20,8 +21,8 @@ export default class Search extends React.Component {
 		super(props);
 		this.state = {
 			searchParams: {
-				locationFrom: '',
-				locationTo: '',
+				locationFrom: 'London',
+				locationTo: 'New York',
 				date: moment()
 			},
 			isSearched: false,
@@ -55,7 +56,7 @@ export default class Search extends React.Component {
 				<SearchResults results={this.state.results} pagination={this.state.pagination} isLoading={this.state.isLoading}
 					isSearched={this.state.isSearched} />
 
-				<Pagination params={this.state.pagination} isLoading={this.state.isLoading} onPrevPage={this.handlePrevPage}
+				<Paginator params={this.state.pagination} isLoading={this.state.isLoading} onPrevPage={this.handlePrevPage}
 					onNextPage={this.handleNextPage} />
 			</div>
 		);
@@ -199,46 +200,47 @@ class SearchForm extends React.Component {
 			return '';
 		}
 			
-		return (
-			<ul className="form-errors">
-				{messages.map((msg, i) => <li key={i}>{msg}</li>)}
-			</ul>
+		return messages.map((msg, i) =>
+			<FormFeedback key={i}>{msg}</FormFeedback>
 		);
 	}
 
 	render() {
 		return (
-			<div>
-				<form onSubmit={this.props.onSubmit} className="search-form">
-					{/* In the autocomplete onChange method I cannot tell the input name from event.target if the event
-						comes from the suggestion mouse click, so I have to forward input's name as parameter as well. */}
-
-					<div className="form-elem">
-						<label htmlFor="locationFrom">From:</label>
-						<Autocomplete name="locationFrom" value={this.props.values.locationFrom} id="locationFrom"
-							onChange={(event, { newValue, method }) => this.props.onInputChange("locationFrom", event, { newValue, method })} />
-						{this.renderValidationMessages("locationFrom")}
-					</div>
-
-					<div className="form-elem">
-						<label htmlFor="locationTo">To:</label>
-						<Autocomplete name="locationTo" value={this.props.values.locationTo} id="locationTo"
-							onChange={(event, { newValue, method }) => this.props.onInputChange("locationTo", event, { newValue, method })} />
-						{this.renderValidationMessages("locationTo")}
-					</div>
-
-					<div className="form-elem">
-						<label htmlFor="date">Date:</label>
-						<DatePicker minDate={moment()} dateFormat="ddd DD MMM" selected={this.props.values.date} onChange={this.props.onDateChange}
-							name="date" id="date" readOnly={true} />
-					</div>
-
-					<div className="form-elem">
-						<input type="submit" value="Search" />
-					</div>
-				</form>
-				<div className="cb"></div>
-			</div>
+			<Form onSubmit={this.props.onSubmit} className="search-form mb-5">
+				{/* In the autocomplete onChange method I cannot tell the input name from event.target if the event
+					comes from the suggestion mouse click, so I have to forward input's name as parameter as well. */}
+				<Row>
+					<Col lg="5">
+						<FormGroup>
+							<Label for="locationFrom">From:</Label>
+							<Autocomplete name="locationFrom" value={this.props.values.locationFrom} id="locationFrom"
+								onChange={(event, { newValue, method }) => this.props.onInputChange("locationFrom", event, { newValue, method })} />
+							{this.renderValidationMessages("locationFrom")}
+						</FormGroup>
+					</Col>
+					<Col lg="5">
+						<FormGroup>
+							<Label for="locationTo">To:</Label>
+							<Autocomplete name="locationTo" value={this.props.values.locationTo} id="locationTo"
+								onChange={(event, { newValue, method }) => this.props.onInputChange("locationTo", event, { newValue, method })} />
+							{this.renderValidationMessages("locationTo")}
+						</FormGroup>
+					</Col>
+					<Col lg="2">
+						<FormGroup>
+							<Label for="date">Date:</Label>
+							<DatePicker customInput={<Input />} minDate={moment()} dateFormat="ddd DD MMM" selected={this.props.values.date}
+								onChange={this.props.onDateChange} name="date" id="date" readOnly={true} calendarClassName="brekeke" />
+						</FormGroup>
+					</Col>
+				</Row>
+				<Row>
+					<Col>
+						<Button color="primary" size="lg">Search</Button>
+					</Col>
+				</Row>
+			</Form>
 		);
 	}
 }
@@ -246,20 +248,21 @@ class SearchForm extends React.Component {
 class SearchResults extends React.Component {
 	render() {
 		const results = this.props.results;
-		let content = null;
+		let alert = null;
 
-		if (results.length) {
-			content = results.map(item => <FlightConnection flight={item.node} key={item.node.id} />);
-		} else if (this.props.isSearched && !this.props.isLoading) {
-			content = <span>No flights found.</span>;
+		if (results.length === 0 && this.props.isSearched && !this.props.isLoading) {
+			alert = <Alert color="info">No flights found.</Alert>;
 		}
 
 		return (
-			<div className="search-results">
-				<div className="flights">
-					{content}
+			<div className="search-results-wrapper">
+				{alert}
+				<div className="search-results">
+					<div className="flights">
+						{results.map(item => <FlightConnection flight={item.node} key={item.node.id} />)}
+					</div>
+					{this.props.isLoading && <div className="loader"></div>}
 				</div>
-				{this.props.isLoading && <div className="loader"></div>}
 			</div>
 		);
 	}
@@ -275,76 +278,85 @@ class FlightConnection extends React.Component {
 		const durationMinutes = flight.duration % 60;
 
 		return (
-			<div className="flight row">
-				<div className="col col-date">
+			<Row className="flight mb-3">
+				<Col md="2" className="pt-2 pb-2">
 					{departureTime.format("HH:mm")} - {arrivalTime.format("HH:mm")}<br />
-					{departureTime.format("ddd DD MMM")}
-				</div>
+					
+					<span className="small">
+						{departureTime.format("ddd DD MMM")}
+					</span>
+				</Col>
 
-				<div className="col col-airports">
+				<Col md="4" className="pt-2 pb-2">
 					{durationHours}h {durationMinutes}min<br />
 				
-					<span title={flight.departure.airport.name}>
-						{flight.departure.airport.city.name}
-						&nbsp;({flight.departure.airport.locationId})
+					<span className="small">
+						<span title={flight.departure.airport.name}>
+							{flight.departure.airport.city.name}
+							&nbsp;({flight.departure.airport.locationId})
+						</span>
+						
+						{' '}&rarr;{' '}
+
+						<span title={flight.arrival.airport.name}>
+							{flight.arrival.airport.city.name}
+							&nbsp;({flight.arrival.airport.locationId})
+						</span>
 					</span>
-					
-					{' '}&rarr;{' '}
+				</Col>
 
-					<span title={flight.arrival.airport.name}>
-						{flight.arrival.airport.city.name}
-						&nbsp;({flight.arrival.airport.locationId})
-					</span><br />
-				</div>
+				<Col md="2" className="pt-2 pb-2">
+					<span className="small">
+						{flight.airlines.map(airline => airline.name).join(', ')}
+					</span>
+				</Col>
 
-				<div className="col col-airlines">
-					{flight.airlines.map(airline => airline.name).join(', ')}
-				</div>
+				<Col md="2" className="pt-2 pb-2">
+					<strong>{flight.price.amount} {flight.price.currency}</strong>
+				</Col>
 
-				<div className="col col-price">
-					{flight.price.amount} {flight.price.currency}
-				</div>
-
-				<div className="col col-link">
+				<Col md="2" className="pt-2 pb-2">
 					<a href={flight.bookingUrl} title="Book flight at Kiwi.com">
 						<img src={KiwiLogo} alt="Book flight" className="logo" />
 					</a>
-				</div>
-
-				<div className="cb"></div>
-			</div>
+				</Col>
+			</Row>
 		);
 	}
 }
 
-class Pagination extends React.Component {
+class Paginator extends React.Component {
 	render() {
 		let prevButton = null, nextButton = null;
 
 		if (this.props.params.hasPreviousPage) {
-			prevButton = <button className="prev" onClick={this.props.onPrevPage} disabled={this.props.isLoading}>
-				&laquo; Prev
-			</button>;
+			prevButton = (
+				<PaginationItem onClick={this.props.onPrevPage} disabled={this.props.isLoading}>
+					<PaginationLink href="#">&laquo; Prev</PaginationLink>
+				</PaginationItem>
+			);
 		}
 
 		if (this.props.params.hasNextPage) {
-			nextButton = <button className="next" onClick={this.props.onNextPage} disabled={this.props.isLoading}>
-				Next &raquo;
-			</button>;
+			nextButton = (
+				<PaginationItem onClick={this.props.onNextPage} disabled={this.props.isLoading}>
+					<PaginationLink href="#">Next &raquo;</PaginationLink>
+				</PaginationItem>
+			);
 		}
 
 		return (
-			<div className="pagination">
+			<Pagination className="mt-3">
 				{prevButton}
 				{nextButton}
-			</div>
+			</Pagination>
 		);
 	}
 }
 
 function ErrorMessage(props) {
 	return (
-		<div className="message message-error">{props.message}</div>
+		<Alert color="danger">{props.message}</Alert>
 	);
 }
 
@@ -409,6 +421,10 @@ class Autocomplete extends React.Component {
 		);
 	}
 
+	renderInputComponent = inputProps => (
+		<Input {...inputProps} innerRef={inputProps.ref} ref={null} />
+	  );
+
 	clearSuggestions() {
 		this.setState({
 			suggestions: []
@@ -437,6 +453,7 @@ class Autocomplete extends React.Component {
 				getSuggestionValue={this.getSuggestionValue}
 				renderSuggestion={this.renderSuggestion}
 				inputProps={this.props}
+				renderInputComponent={this.renderInputComponent}
 		  	/>
 		);
 	}

@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Kiwi search",
+  "name": "Kiwi.com experimental flights search",
   "icons": [
     {
       "src": "favicon.ico",
