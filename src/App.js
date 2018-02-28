@@ -21,8 +21,8 @@ export default class Search extends React.Component {
 		super(props);
 		this.state = {
 			searchParams: {
-				locationFrom: 'London',
-				locationTo: 'New York',
+				locationFrom: '',
+				locationTo: '',
 				date: moment()
 			},
 			isSearched: false,
@@ -214,7 +214,7 @@ class SearchForm extends React.Component {
 					<Col lg="5">
 						<FormGroup>
 							<Label for="locationFrom">From:</Label>
-							<Autocomplete name="locationFrom" value={this.props.values.locationFrom} id="locationFrom"
+							<Autocomplete name="locationFrom" value={this.props.values.locationFrom} id="locationFrom" placeholder="London"
 								onChange={(event, { newValue, method }) => this.props.onInputChange("locationFrom", event, { newValue, method })} />
 							{this.renderValidationMessages("locationFrom")}
 						</FormGroup>
@@ -222,7 +222,7 @@ class SearchForm extends React.Component {
 					<Col lg="5">
 						<FormGroup>
 							<Label for="locationTo">To:</Label>
-							<Autocomplete name="locationTo" value={this.props.values.locationTo} id="locationTo"
+							<Autocomplete name="locationTo" value={this.props.values.locationTo} id="locationTo" placeholder="New York"
 								onChange={(event, { newValue, method }) => this.props.onInputChange("locationTo", event, { newValue, method })} />
 							{this.renderValidationMessages("locationTo")}
 						</FormGroup>

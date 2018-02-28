@@ -141,3 +141,14 @@ body {
 	background-color: #ddd;
 }
 
+.form-control::-moz-placeholder {
+	color: #e8e8e8;
+}
+
+.form-control:-ms-input-placeholder {
+	color: #e8e8e8;
+}
+
+.form-control::-webkit-input-placeholder {
+	color: #e8e8e8;
+}
