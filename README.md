@@ -30,13 +30,13 @@ npm install
 
 ## Deployment
 
-To run the app in *development* mode:
+To run the app in **development** mode:
 ```
 npm start
 ```
 Open http://localhost:3000 to view it in the browser.
 
-To build the app for *production* to the `build` folder:
+To build the app for **production** to the `build` folder:
 ```
 npm run build
 ```
