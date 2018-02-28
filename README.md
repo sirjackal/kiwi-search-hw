@@ -3,6 +3,12 @@
 This app was written as a part of homework for developers interested in [Modern JS weekend](https://jsweekend.cz/)
 organized by [Kiwi.com](https://www.kiwi.com/). It's used for searching flight connections.
 
+## Features
+
+- one way flight connections search (by parameters from, to, date)
+- locations suggestions while typing (autocomplete)
+- search results pagination
+
 ## TODO:
 
 - BEM / Bootstrap?

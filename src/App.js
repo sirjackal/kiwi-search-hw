@@ -119,40 +119,28 @@ export default class Search extends React.Component {
 			isSearched: true
 		});
 
-		try {
-			let flights = SearchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE);
-			this.showResults(flights);
-		} catch (err) {
-			this.handleError(err);
-		}
+		let flights = SearchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE);
+		this.showResults(flights);
 	}
 
 	handlePrevPage(event) {
 		event.preventDefault();
 		this.setState({isLoading: true});
 
-		try {
-			let flights = SearchModel.searchFlights(this.state.searchParams, null, null,
-				RESULTS_PER_PAGE, this.state.pagination.startCursor);
+		let flights = SearchModel.searchFlights(this.state.searchParams, null, null,
+			RESULTS_PER_PAGE, this.state.pagination.startCursor);
 
-			this.showResults(flights, PaginationDir.PREV);
-		} catch (err) {
-			this.handleError(err);
-		}
+		this.showResults(flights, PaginationDir.PREV);
 	}
 
 	handleNextPage(event) {
 		event.preventDefault();
 		this.setState({isLoading: true});
 
-		try {
-			let flights = SearchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE,
-				this.state.pagination.endCursor, null, null);
+		let flights = SearchModel.searchFlights(this.state.searchParams, RESULTS_PER_PAGE,
+			this.state.pagination.endCursor, null, null);
 
-			this.showResults(flights, PaginationDir.NEXT);
-		} catch (err) {
-			this.handleError(err);
-		}
+		this.showResults(flights, PaginationDir.NEXT);
 	}
 
 	showResults(flights, lastPaginationDir) {
@@ -176,8 +164,6 @@ export default class Search extends React.Component {
 				};
 			}
 			
-			// TODO: distinguish input errors (Location has not been found) vs. backend error
-			// (syntax error in query)
 			if (Array.isArray(response.errors)) {
 				 errors = response.errors.map(error => error.message);
 			}
@@ -188,6 +174,9 @@ export default class Search extends React.Component {
 				pagination: pagination
 			});
 		})
+		.catch(err =>
+			this.handleError(err)
+		)
 		.finally(() =>
 			this.setState({isLoading: false})
 		);
@@ -370,12 +359,16 @@ class Autocomplete extends React.Component {
 		this.onSuggestionsClearRequested = this.onSuggestionsClearRequested.bind(this);
 	}
 
+	/**
+	 * @param {string} value 
+	 * @returns {Promise}
+	 */
 	getSuggestions(value) {
 		const inputValue = value.trim();
 		const inputLength = inputValue.length;
 
 		if (inputLength === 0) {
-			return [];
+			return Promise.resolve([]);
 		}
 
 		return SearchModel.searchLocations(inputValue, AUTOCOMPLETE_SUGGESTIONS_LIMIT)
@@ -388,6 +381,16 @@ class Autocomplete extends React.Component {
 
 				return nodes;
 			});
+	};
+
+	onSuggestionsFetchRequested = ({ value }) => {
+		this.getSuggestions(value).then(suggestions => {
+			this.setState({suggestions: suggestions});
+		})
+		.catch(err => {
+			this.clearSuggestions();
+			//console.error(err);
+		});
 	};
 
 	renderSuggestion(suggestion) {
@@ -405,17 +408,6 @@ class Autocomplete extends React.Component {
 			</span>
 		);
 	}
-
-	onSuggestionsFetchRequested = ({ value }) => {
-		try {
-			this.getSuggestions(value).then(suggestions => {
-				this.setState({suggestions: suggestions});
-			})
-			.catch(err => this.clearSuggestions());
-		} catch (err) {
-			this.clearSuggestions();
-		}
-	};
 
 	clearSuggestions() {
 		this.setState({

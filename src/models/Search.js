@@ -124,5 +124,10 @@ function fetchData(query, variables) {
 			'content-type': 'application/json'
 		},
 	})
-	.then(response => response.json());
+	.then(response => {
+		if (response.ok) {
+			return response.json();
+		}
+		throw new Error('Network response was not ok.');
+	});
 }
