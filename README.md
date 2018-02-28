@@ -15,6 +15,9 @@ Check out the [demo page](https://kiwi.krepa.cz/).
 - destinations suggestions while typing (autocomplete)
 - search results pagination
 - using [GraphQL API](https://kiwi-graphiql.now.sh/) to fetch data
+- simple form validation
+- errors handling
+- responsive design using [Bootstrap 4](https://getbootstrap.com/) components.
 
 ## Installation
 
