@@ -1,7 +1,6 @@
 {
   "name": "kiwi-search-hw",
   "version": "1.0.0",
-  "homepage": "https://github.com/sirjackal/kiwi-search-hw",
   "private": true,
   "dependencies": {
     "bootstrap": "^4.0.0",
