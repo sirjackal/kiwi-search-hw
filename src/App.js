@@ -6,7 +6,7 @@ import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Form, FormGroup, Label, Input, Button, FormFeedback, Row, Col, Pagination, PaginationItem,
-	PaginationLink, Alert } from 'reactstrap';
+	PaginationLink, Alert, UncontrolledAlert } from 'reactstrap';
 
 const RESULTS_PER_PAGE = 5;
 const AUTOCOMPLETE_SUGGESTIONS_LIMIT = 10;
@@ -48,16 +48,18 @@ export default class Search extends React.Component {
 	render() {
 		return (
 			<div className="search">
-				<SearchForm onSubmit={this.handleFormSubmit} onInputChange={this.handleInputChange}
-					onDateChange={this.handleDateChange} values={this.state.searchParams} validationMessages={this.state.validationMessages} />
+				<ErrorBoundary>
+					<SearchForm onSubmit={this.handleFormSubmit} onInputChange={this.handleInputChange}
+						onDateChange={this.handleDateChange} values={this.state.searchParams} validationMessages={this.state.validationMessages} />
 
-				{this.state.errors.map((message, i) => <ErrorMessage message={message} key={i} />)}
+					{this.state.errors.map((message, i) => <ErrorMessage message={message} key={i} />)}
 
-				<SearchResults results={this.state.results} pagination={this.state.pagination} isLoading={this.state.isLoading}
-					isSearched={this.state.isSearched} />
+					<SearchResults results={this.state.results} pagination={this.state.pagination} isLoading={this.state.isLoading}
+						isSearched={this.state.isSearched} />
 
-				<Paginator params={this.state.pagination} isLoading={this.state.isLoading} onPrevPage={this.handlePrevPage}
-					onNextPage={this.handleNextPage} />
+					<Paginator params={this.state.pagination} isLoading={this.state.isLoading} onPrevPage={this.handlePrevPage}
+						onNextPage={this.handleNextPage} />
+				</ErrorBoundary>
 			</div>
 		);
 	}
@@ -231,7 +233,7 @@ class SearchForm extends React.Component {
 						<FormGroup>
 							<Label for="date">Date:</Label>
 							<DatePicker customInput={<Input />} minDate={moment()} dateFormat="ddd DD MMM" selected={this.props.values.date}
-								onChange={this.props.onDateChange} name="date" id="date" readOnly={true} calendarClassName="brekeke" />
+								onChange={this.props.onDateChange} name="date" id="date" readOnly={true} />
 						</FormGroup>
 					</Col>
 				</Row>
@@ -456,5 +458,29 @@ class Autocomplete extends React.Component {
 				renderInputComponent={this.renderInputComponent}
 		  	/>
 		);
+	}
+}
+
+class ErrorBoundary extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			hasError: false
+		};
+	}
+  
+	componentDidCatch(error, info) {
+	  this.setState({ hasError: true });
+	}
+  
+	render() {
+		if (this.state.hasError) {
+			return (
+				<UncontrolledAlert color="danger">
+					Sorry, something went wrong. Please try to reload the page.
+				</UncontrolledAlert>
+			);
+	  	}
+		return this.props.children;
 	}
 }
